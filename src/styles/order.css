@@ -1,0 +1,272 @@
+/* src/styles/order.css */
+/* 화사하고 깔끔한 라이트 모드 테마 — 주문/결제/상세 전용 */
+
+.order-page { 
+  max-width: 700px; 
+  margin: 0 auto; 
+  padding: 20px; 
+  text-align: left; 
+  background: #f5f6f7; /* 전체 바깥 배경색 (연한 회색) */
+  color: #333333; /* 기본 글자색 (어두운 회색) */
+  border-radius: 12px;
+}
+
+/* 상단 타이틀 (주문서 작성 / 결제 등) */
+.order-title { 
+  font-size: 1.4em; 
+  font-weight: bold; 
+  margin-bottom: 20px; 
+  border-bottom: 2px solid #e0e2e5; 
+  padding-bottom: 10px; 
+  color: #168f88; /* 포인트 민트색 */
+}
+
+/* [핵심 수정] 검은색이었던 카드 내부를 흰색으로 변경 */
+.order-card { 
+  background-color: #ffffff; /* 내부 흰색 처리 */
+  border: 1px solid #e0e2e5; /* 연한 회색 테두리 */
+  border-radius: 8px; 
+  padding: 20px; 
+  margin-bottom: 16px; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); /* 은은한 그림자 */
+}
+
+/* 카드 상단 소제목 (상품 정보, 배송지 정보 등) */
+.order-card-label { 
+  font-size: 0.78em; 
+  color: #168f88; /* 포인트 색상 적용 */
+  font-weight: 700;
+  letter-spacing: 0.05em; 
+  text-transform: uppercase; 
+  margin-bottom: 14px; 
+}
+
+/* 인풋 폼 그룹 */
+.order-form-group { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  margin-bottom: 14px; 
+}
+
+.order-form-group label { 
+  font-size: 0.85em; 
+  color: #555555; /* 라벨 글자색 가독성 확보 */
+  font-weight: 600;
+}
+
+/* 입력창 스타일 */
+.order-form-group input, 
+.order-form-group select, 
+.order-form-group textarea {
+  background: #ffffff; 
+  border: 1px solid #cccccc; 
+  border-radius: 6px;
+  color: #333333; 
+  font-family: inherit; 
+  font-size: 0.9em; 
+  padding: 10px 12px; 
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 입력창 포커스(클릭) 시 스타일 */
+.order-form-group input:focus, 
+.order-form-group select:focus, 
+.order-form-group textarea:focus { 
+  border-color: #168f88; 
+  box-shadow: 0 0 0 3px rgba(22, 143, 136, 0.1); /* 민트색 강조 라인 */
+}
+
+.order-form-group textarea { 
+  resize: vertical; 
+  min-height: 70px; 
+}
+
+/* 금액 및 정보 가로 정렬 행 */
+.order-price-row, .order-info-row { 
+  display: flex; 
+  justify-content: space-between; 
+  padding: 10px 0; 
+  border-bottom: 1px solid #f1f3f5; 
+  font-size: 0.9em; 
+  align-items: center;
+}
+
+.order-price-row:last-child, .order-info-row:last-child { 
+  border-bottom: none; 
+}
+
+/* 최종 결제 금액 열 강조 */
+.order-price-row:last-child { 
+  font-weight: bold; 
+  color: #168f88; /* 최종 금액 포인트 색상 */
+  font-size: 1.1em;
+  padding-top: 14px;
+  border-top: 1px solid #e0e2e5;
+}
+
+.order-price-sub, .order-info-label { 
+  color: #666666; 
+}
+
+.order-info-value {
+  color: #222222;
+  font-weight: 500;
+}
+
+/* 버튼 공통 스타일 */
+.order-btn { 
+  display: block; 
+  width: 100%; 
+  padding: 14px; 
+  border-radius: 8px; 
+  font-size: 0.95em; 
+  font-weight: 600; 
+  cursor: pointer; 
+  font-family: inherit; 
+  margin-top: 10px; 
+  transition: background 0.2s, border-color 0.2s; 
+}
+
+/* 결제하기 / 운송장등록 버튼 (이미지의 보라/파란색 톤 반영) */
+.order-btn-primary { 
+  background: #5c66fe; 
+  color: #ffffff; 
+  border: 1px solid #5c66fe; 
+}
+
+.order-btn-primary:hover { 
+  background: #4a54e1; 
+  border-color: #4a54e1; 
+}
+
+.order-btn-primary:disabled { 
+  background: #dddddd; 
+  color: #aaaaaa; 
+  cursor: not-allowed; 
+  border-color: #dddddd; 
+}
+
+/* 취소하기 / 돌아가기 버튼 */
+.order-btn-outline { 
+  background: #222222; 
+  color: #ffffff; 
+  border: 1px solid #222222; 
+}
+
+.order-btn-outline:hover { 
+  background: #111111; 
+  border-color: #111111;
+}
+
+/* 카카오페이 버튼 */
+.order-btn-kakao { 
+  background: #FEE500; 
+  color: #111111; 
+  border: none; 
+}
+.order-btn-kakao:hover { background: #ffd600; }
+
+/* 상단 프로세스 스텝 바 (1 -> 2 -> 3) */
+.order-steps { 
+  display: flex; 
+  align-items: flex-start; 
+  padding: 10px 0 25px 0; 
+}
+
+.order-step { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 6px; 
+  position: relative; 
+}
+
+/* 스텝 사이 연결선 */
+.order-step::after { 
+  content: ''; 
+  position: absolute; 
+  top: 13px; 
+  left: 50%; 
+  width: 100%; 
+  height: 2px; 
+  background: #e0e2e5; 
+}
+
+.order-step:last-child::after { 
+  display: none; 
+}
+
+.order-step-dot { 
+  width: 26px; 
+  height: 26px; 
+  border-radius: 50%; 
+  border: 2px solid #b5b9c0; 
+  background: #ffffff; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 0.75em; 
+  font-weight: bold;
+  color: #757c85;
+  z-index: 1; 
+}
+
+/* 진행 완료 및 현재 스텝 상태 색상 매칭 */
+.order-step.done .order-step-dot { 
+  background: #5c66fe; 
+  border-color: #5c66fe; 
+  color: #ffffff; 
+}
+
+.order-step.active .order-step-dot { 
+  border-color: #5c66fe; 
+  color: #5c66fe; 
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(92, 102, 254, 0.15);
+}
+
+.order-step-label { 
+  font-size: 0.75em; 
+  color: #757c85; 
+  font-weight: 600;
+}
+
+.order-step.done .order-step-label, 
+.order-step.active .order-step-label { 
+  color: #5c66fe; 
+}
+
+/* 상태 배정 뱃지 */
+.order-badge { 
+  display: inline-block; 
+  padding: 3px 10px; 
+  border-radius: 12px; 
+  font-size: 0.72em; 
+  font-weight: 700; 
+}
+.badge-REQUESTED { background:#f0f0f0; color:#666666; border:1px solid #dddddd; }
+.badge-PAID      { background:#e6f4f3; color:#168f88; border:1px solid #168f88; }
+.badge-SHIPPING  { background:#e8f4fd; color:#2196f3; border:1px solid #2196f3; }
+.badge-DELIVERED { background:#fff8e1; color:#ffb300; border:1px solid #ffb300; }
+.badge-CANCELLED { background:#ffebee; color:#f44336; border:1px solid #f44336; }
+
+/* 알림/에러 메시지 박스 */
+.order-alert { 
+  padding: 12px 14px; 
+  border-radius: 6px; 
+  font-size: 0.88em; 
+  margin-top: 12px; 
+  font-weight: 600;
+}
+.order-alert-error { background:#ffebee; border: 1px solid #f44336; color:#f44336; }
+.order-alert-success { background:#e6f4f3; border: 1px solid #168f88; color:#168f88; }
+
+.order-loading { 
+  text-align: center; 
+  padding: 60px; 
+  color: #168f88; 
+  font-weight: 600;
+}

@@ -1,0 +1,346 @@
+.service-guide-page {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.service-guide-hero {
+  color: #111;
+  background: #f7f7f7;
+  border-bottom: 1px solid #ececec;
+}
+
+.service-hero-fees {
+  background: #f7f7f7;
+}
+
+.service-hero-shipping {
+  background: #f7f7f7;
+}
+
+.service-guide-hero-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 42px 20px 40px;
+  text-align: left;
+}
+
+.service-guide-hero-inner span {
+  display: block;
+  margin-bottom: 12px;
+  color: #777;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.service-guide-hero-inner h1 {
+  margin: 0;
+  color: #111;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.service-guide-hero-inner p {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: #555;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.service-guide-content {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 34px 20px 84px;
+}
+
+.guide-section + .guide-section {
+  margin-top: 32px;
+}
+
+.guide-section-heading {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.guide-section-heading h2 {
+  margin: 0;
+  color: #111;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.guide-section-heading::after {
+  display: none;
+}
+
+.guide-card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.guide-card-grid-steps {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.guide-card-grid-wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.guide-card-grid-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guide-card {
+  position: relative;
+  min-height: 156px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+}
+
+.guide-card-grid-steps .guide-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.guide-card-icon {
+  width: auto;
+  height: auto;
+  margin-bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  color: #777;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.guide-step-arrow {
+  flex: 0 0 18px;
+  align-self: center;
+  color: #aaa;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+
+.guide-card h3 {
+  margin: 0;
+  color: #111;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.guide-card p {
+  margin: 12px 0 0;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.guide-card-grid-summary .guide-card {
+  min-height: 176px;
+}
+
+.guide-card-grid-summary .guide-card h3 {
+  margin-top: 0;
+}
+
+.guide-card-grid-summary .guide-card-icon {
+  color: #111;
+  font-size: 18px;
+}
+
+.guide-card-grid-summary .guide-card p {
+  color: #555;
+  font-size: 13px;
+}
+
+.guide-calc-box {
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.guide-calc-item {
+  position: relative;
+  min-height: 96px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 1px solid #eeeeee;
+}
+
+.guide-calc-item:first-child {
+  border-left: 0;
+}
+
+.guide-calc-item::before {
+  display: none;
+}
+
+.guide-calc-item span {
+  color: #666;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.guide-calc-item strong {
+  margin-top: 8px;
+  color: #111;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.guide-calc-item:last-child strong {
+  color: #111;
+}
+
+.guide-calc-item b {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #777;
+  background: #f4f4f4;
+  transform: translate(50%, -50%);
+  z-index: 1;
+}
+
+.guide-notice {
+  margin-top: 32px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  color: #111;
+  background: #fafafa;
+}
+
+.guide-notice-icon {
+  display: none;
+}
+
+.guide-notice h2 {
+  margin: 0 0 8px;
+  color: #111;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.guide-notice p,
+.guide-notice li {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.guide-notice p {
+  margin: 0;
+}
+
+.guide-notice ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 1020px) {
+  .guide-card-grid-wide,
+  .guide-card-grid-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-card-grid-steps {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .guide-step-arrow {
+    flex: 0 0 auto;
+    transform: rotate(90deg);
+  }
+
+  .guide-calc-box {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-calc-item,
+  .guide-calc-item:first-child {
+    border-left: 0;
+    border-top: 1px solid #eeeeee;
+  }
+
+  .guide-calc-item:first-child {
+    border-top: 0;
+  }
+
+  .guide-calc-item b {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .service-guide-hero-inner {
+    padding: 34px 20px 32px;
+  }
+
+  .service-guide-hero-inner h1 {
+    font-size: 28px;
+  }
+
+  .service-guide-content {
+    padding: 26px 16px 64px;
+  }
+
+  .guide-section + .guide-section,
+  .guide-notice {
+    margin-top: 26px;
+  }
+
+  .guide-card-grid-wide,
+  .guide-card-grid-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-card-grid-steps {
+    flex-direction: column;
+  }
+
+  .guide-card,
+  .guide-calc-item,
+  .guide-notice {
+    padding: 20px;
+  }
+}
