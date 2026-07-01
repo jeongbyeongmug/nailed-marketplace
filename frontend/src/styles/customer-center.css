@@ -1,0 +1,522 @@
+.customer-center-page {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.customer-hero {
+  color: #111;
+  background: #f7f7f7;
+  border-bottom: 1px solid #ececec;
+}
+
+.customer-hero-inner {
+  max-width: 1210px;
+  margin: 0 auto;
+  padding: 42px 20px 40px;
+  text-align: left;
+}
+
+.customer-hero-inner span {
+  display: block;
+  margin-bottom: 38px;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.customer-hero-inner h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.customer-hero-inner p {
+  margin: 14px 0 0;
+  color: #555;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.customer-center-content {
+  max-width: 1210px;
+  margin: 0 auto;
+  padding: 30px 20px 84px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 32px;
+}
+
+.customer-tabs {
+  height: fit-content;
+  padding: 16px 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.customer-tabs h2 {
+  margin: 0 10px 16px;
+  color: #111;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.customer-tabs button {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: 28px 1fr 14px;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #333;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.customer-tabs button + button {
+  margin-top: 8px;
+}
+
+.customer-tabs button.active {
+  color: #111;
+  background: #f1f1f1;
+}
+
+.customer-tabs button span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 13px;
+}
+
+.customer-tabs button b {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.customer-panel-head {
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.customer-panel-head h2 {
+  margin: 0;
+  color: #111;
+  font-size: 24px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.notice-tools {
+  display: flex;
+  height: 38px;
+  border: 1px solid #dedede;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.notice-tools select,
+.notice-tools input {
+  border: 0;
+  outline: 0;
+  background: #fff;
+  color: #222;
+  font-size: 13px;
+}
+
+.notice-tools select {
+  width: 86px;
+  padding: 0 12px;
+  border-right: 1px solid #dedede;
+}
+
+.notice-tools input {
+  width: 260px;
+  padding: 0 14px;
+}
+
+.notice-table {
+  overflow: hidden;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.notice-row {
+  min-height: 53px;
+  padding: 0 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 140px;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid #eeeeee;
+  color: #333;
+  font-size: 14px;
+}
+
+.notice-row:first-child {
+  border-top: 0;
+}
+
+.notice-head {
+  min-height: 44px;
+  background: #f8f8f8;
+  color: #171717;
+  font-weight: 800;
+  text-align: center;
+}
+
+.notice-row strong {
+  font-size: 14px;
+}
+
+.notice-link-row {
+  cursor: pointer;
+}
+
+.notice-link-row:hover {
+  background: #fafafa;
+}
+
+.notice-link-row:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: -2px;
+}
+
+.notice-badge {
+  width: fit-content;
+  min-width: 70px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #333;
+  background: #f1f1f1;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.notice-empty {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  border-top: 1px solid #eeeeee;
+  color: #666;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.notice-pagination,
+.faq-pagination {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.notice-pagination button,
+.faq-pagination button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dedede;
+  border-radius: 6px;
+  color: #333;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.notice-pagination button.active,
+.faq-pagination button.active {
+  color: #fff;
+  border-color: #111;
+  background: #111;
+}
+
+.notice-detail {
+  padding: 28px 30px;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.notice-detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.notice-detail-top time {
+  color: #666;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notice-detail h3 {
+  margin: 22px 0 18px;
+  color: #111;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.notice-detail-content {
+  padding: 22px 0 28px;
+  border-top: 1px solid #eeeeee;
+  color: #444;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.notice-detail-content p {
+  margin: 0;
+}
+
+.notice-detail-content p + p {
+  margin-top: 6px;
+}
+
+.notice-list-button {
+  min-width: 96px;
+  height: 38px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #111;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.faq-categories {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.faq-categories button {
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid #dedede;
+  border-radius: 999px;
+  color: #333;
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.faq-categories button.active {
+  color: #fff;
+  border-color: #111;
+  background: #111;
+}
+
+.faq-list,
+.inquiry-form,
+.service-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.faq-item {
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.faq-item button {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 70px 1fr 24px;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.faq-item button span {
+  color: #555;
+  font-size: 13px;
+}
+
+.faq-item p {
+  margin: 0;
+  padding: 0 20px 18px 102px;
+  color: #555;
+  line-height: 1.7;
+}
+
+.faq-empty {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  color: #666;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.inquiry-form {
+  max-width: 680px;
+}
+
+.inquiry-form label {
+  display: grid;
+  gap: 8px;
+  color: #222;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.inquiry-form input,
+.inquiry-form select,
+.inquiry-form textarea {
+  width: 100%;
+  border: 1px solid #dedede;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #222;
+  background: #fff;
+  font: inherit;
+}
+
+.inquiry-form input,
+.inquiry-form select {
+  height: 46px;
+}
+
+.inquiry-form textarea {
+  padding-top: 13px;
+  resize: vertical;
+}
+
+.inquiry-form > button {
+  width: 150px;
+  height: 46px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #111;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inquiry-message {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #222;
+  background: #f3f3f3;
+  font-weight: 800;
+}
+
+.service-card-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.service-card {
+  min-height: 220px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.service-card-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #222;
+  background: #f2f2f2;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.service-card strong {
+  color: #111;
+  font-size: 21px;
+}
+
+.service-card p {
+  margin: 16px 0 26px;
+  color: #555;
+  line-height: 1.7;
+}
+
+.service-card-button {
+  width: fit-content;
+  margin-top: auto;
+  padding: 10px 16px;
+  border-radius: 999px;
+  color: #111;
+  background: #f1f1f1;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .customer-center-content {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .notice-tools {
+    width: 100%;
+  }
+
+  .notice-tools input {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notice-row {
+    grid-template-columns: minmax(0, 1fr) 110px 100px;
+    padding: 0 16px;
+  }
+
+  .notice-detail {
+    padding: 24px 18px;
+  }
+
+  .service-card-list {
+    grid-template-columns: 1fr;
+  }
+}

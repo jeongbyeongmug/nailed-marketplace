@@ -1,0 +1,459 @@
+/* ── 페이지 레이아웃 ──────────────────────────────────── */
+.sell-page {
+  min-height: 100vh;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 상단 헤더 ───────────────────────────────────────── */
+.sell-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #ebebeb;
+}
+.sell-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #151515;
+}
+.sell-beta {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.sell-header-actions {
+  display: flex;
+  gap: 8px;
+}
+.sell-cancel-btn {
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.sell-cancel-btn:hover { border-color: #151515; color: #151515; }
+.sell-delete-btn {
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid #e53935;
+  background: #fff;
+  color: #e53935;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sell-delete-btn:hover { background: #e53935; color: #fff; }
+.sell-upload-btn {
+  height: 36px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 8px;
+  background: #151515;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sell-upload-btn:hover { opacity: 0.82; }
+.sell-upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── 본문 2컬럼 ──────────────────────────────────────── */
+.sell-body {
+  display: flex;
+  gap: 48px;
+  max-width: 920px;
+  width: 100%;
+  margin: 36px auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+/* ── 왼쪽: 사진 ──────────────────────────────────────── */
+.sell-left {
+  flex: 0 0 400px;
+}
+.sell-section-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #151515;
+  margin-bottom: 12px;
+}
+.sell-image-area {
+  width: 100%;
+  min-height: 220px;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.sell-image-area:hover { border-color: #aaa; }
+.sell-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 20px;
+}
+.sell-image-btn {
+  height: 42px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 50px;
+  background: #151515;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sell-image-hint {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+.sell-image-area:has(.sell-image-grid) {
+  align-items: flex-start;
+  justify-content: flex-start;
+  cursor: default;
+}
+.sell-image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sell-image-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0f0f0;
+  cursor: grab;
+}
+.sell-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sell-image-loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sell-image-badge {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.sell-image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.sell-image-thumb:hover .sell-image-remove { opacity: 1; }
+.sell-image-add {
+  aspect-ratio: 1;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 4px;
+  transition: border-color 0.15s;
+}
+.sell-image-add:hover { border-color: #aaa; }
+.sell-image-add span:first-child { font-size: 22px; color: #bbb; line-height: 1; }
+.sell-image-add-count { font-size: 11px; color: #bbb; }
+.sell-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 12px;
+}
+.sell-tip-link {
+  color: #555;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── 오른쪽: 폼 ──────────────────────────────────────── */
+.sell-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.sell-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sell-field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+}
+.sell-input-wrap {
+  position: relative;
+}
+.sell-count {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-size: 12px;
+  color: #bbb;
+  pointer-events: none;
+}
+.sell-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #151515;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.sell-input::-webkit-outer-spin-button,
+.sell-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sell-input:focus { border-color: #151515; }
+.sell-input.error { border-color: #d32f2f; }
+.sell-input::placeholder { color: #bbb; }
+.sell-textarea {
+  width: 100%;
+  height: 130px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #151515;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  resize: none;
+  line-height: 1.6;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.sell-textarea:focus { border-color: #151515; }
+.sell-textarea.error { border-color: #d32f2f; }
+.sell-textarea::placeholder { color: #bbb; }
+
+/* ── 라디오 ──────────────────────────────────────────── */
+.sell-radio-group {
+  display: flex;
+  gap: 28px;
+}
+.sell-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+.sell-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #151515;
+  cursor: pointer;
+}
+
+/* ── 칩 버튼 ─────────────────────────────────────────── */
+.sell-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sell-chip {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-radius: 50px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.sell-chip:hover { border-color: #151515; color: #151515; }
+.sell-chip.active {
+  background: #151515;
+  border-color: #151515;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── 셀렉트 ──────────────────────────────────────────── */
+.sell-select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.sell-select:focus { border-color: #151515; }
+
+/* 럭셔리 브랜드 자동입력 표시 (읽기전용) */
+.sell-brand-readonly {
+  height: 42px;
+  line-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  cursor: default;
+  box-sizing: border-box;
+}
+
+/* ── 배송비 / 판매가 ────────────────────────────────── */
+.sell-field-row {
+  flex-direction: row;
+  gap: 16px;
+}
+.sell-field-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sell-price-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sell-price-wrap .sell-input {
+  flex: 1;
+}
+.sell-unit {
+  font-size: 14px;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* ── 판매 상태 버튼 그룹 ──────────────────────────────── */
+.sell-status-group {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sell-status-btn {
+  flex: 1;
+  height: 42px;
+  border: none;
+  border-right: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, font-weight 0.15s;
+}
+.sell-status-btn:last-child { border-right: none; }
+.sell-status-btn:hover { background: #f5f5f5; color: #151515; }
+.sell-status-btn.active {
+  background: #151515;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── 에러 메시지 ─────────────────────────────────────── */
+.sell-error {
+  font-size: 12px;
+  color: #d32f2f;
+  margin: 0;
+}
+.sell-error-submit {
+  font-size: 14px;
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff3f3;
+  border: 1px solid #fcc;
+}
+
+/* ── 반응형 ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sell-body { flex-direction: column; padding: 0 20px; gap: 28px; }
+  .sell-left { flex: none; width: 100%; }
+  .sell-header { padding: 0 20px; }
+  .sell-field-row { flex-direction: column; }
+}
