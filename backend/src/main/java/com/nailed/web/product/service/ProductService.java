@@ -542,4 +542,20 @@ public class ProductService {
         }
         return result;
     }
+ // ── [테스트용] 분산 락 타깃을 위한 안전한 가상 주문 로직 (수정 버전) ──
+    @Transactional
+    public void testPurchaseProduct(Long productId, String buyerId) {
+        // 1. 상품 존재 여부 및 활성화 상태 체크
+        Product product = productRepository.findByProductIdAndProductStatusNot(productId, ProductStatus.DELETED)
+                .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        // 2. 이미 판매 완료된 상품인지 체크
+        if (product.getProductStatus() == ProductStatus.SOLD) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        // 3. 판매완료 처리 → productStatus = SOLD
+        // 영속 상태 엔티티이므로 dirty checking으로 트랜잭션 커밋 시 자동 UPDATE 된다. (별도 save 불필요)
+        product.completeSale();
+    }
 }
