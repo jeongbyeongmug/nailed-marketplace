@@ -3,12 +3,15 @@ package com.nailed.web.product;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import com.nailed.web.product.service.ProductService; // 패키지 경로에 맞게 자동 임포트
 
 import java.util.concurrent.TimeUnit;
 
+// @Lazy: 부팅 시 RedissonClient를 끌어와 Redis에 접속하지 않도록 지연 로딩한다.
 @Component
+@Lazy
 @RequiredArgsConstructor
 public class ProductLockFacade {
 

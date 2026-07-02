@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,7 +22,9 @@ import com.nailed.web.product.repository.ProductRepository;
 
 import jakarta.persistence.EntityManager;
 
+// @Lazy: 부팅 시 ProductLockFacade→RedissonClient 체인을 끌어오지 않도록 지연 로딩한다.
 @Component
+@Lazy
 public class ProductLockFacadeTest {
 
     private final ProductLockFacade productLockFacade;
