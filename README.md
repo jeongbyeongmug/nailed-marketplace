@@ -16,6 +16,8 @@
 
 재고 1개 상품에 동시 구매가 몰리면 중복 주문이 발생할 수 있습니다. 충돌 확률이 높은 도메인 특성상 낙관적 락(실패-재시도)보다 **비관적 락으로 선점 차단**하는 쪽을 택했습니다.
 
+> **트레이드오프** — 비관적 락은 경합 시 락 대기로 처리량이 떨어지고 데드락 위험이 있습니다. 그래서 **락 타임아웃(→ `O012` 409)으로 무한 대기를 끊고, 락 구간을 ‘상품 조회 ~ 상태 변경’으로 최소화**했습니다. 재고 1개라 '재시도 폭주'가 없는 이 도메인에선 비관적 락의 **예측 가능성**이 더 유리하다고 판단했습니다.
+
 ```java
 // ProductRepository — 주문 시 상품 행에 쓰기 락(SELECT ... FOR UPDATE) 선점
 @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -96,6 +98,48 @@ PAID ──▶ REQUESTED ──▶ SHIPPING ──▶ DELIVERED
 - 마이페이지 구매/판매/정산/문의 내역 — **Port 인터페이스**(`OrderMemberQueryPort`, `SettlementMemberQueryPort`)로 회원 도메인과 결합도 최소화
 - 1:1 문의(등록·조회·답변) + 관리자 주문/문의 관리(`AdminOrderController`, `AdminInquiryController`)
 - `GlobalExceptionHandler` + `ErrorCode`로 BE/FE 에러 응답 규격 통일
+
+<br>
+
+## 🔌 API 설계 (담당 — 주문 · CS)
+
+자원 중심 URL · 상태 전이는 `PATCH` · 생성은 `201 Created` + `Location` 등 REST 컨벤션으로 설계했습니다.
+
+| Method | Endpoint | 설명 |
+|---|---|---|
+| `POST` | `/api/orders` | 주문 생성 → **201 Created** (`Location: /api/orders/{id}`) |
+| `GET` | `/api/orders/{id}` | 주문 조회 |
+| `PATCH` | `/api/orders/{id}/pay` | 결제 처리 |
+| `PATCH` | `/api/orders/{id}/confirm` | 주문 확인 (판매자) |
+| `PATCH` | `/api/orders/{id}/shipping` | 운송장 등록 (판매자) |
+| `PATCH` | `/api/orders/{id}/delivered` | 배송 완료 |
+| `POST` | `/api/orders/{id}/cancel` | 주문 취소 (구매자) |
+| `POST` | `/api/inquiries` | 1:1 문의 등록 |
+| `GET` | `/api/inquiries/my` | 내 문의 목록 (페이징) |
+| `GET` | `/api/inquiries/my/{id}` | 내 문의 상세 |
+
+**통일 응답 규격** — `ApiResponse<T>` + `GlobalExceptionHandler`로 성공/실패 포맷을 하나로 맞췄습니다.
+
+```jsonc
+// 성공
+{ "success": true, "data": { "orderId": "...", "status": "PAID", "finalPrice": 503880 } }
+
+// 실패 — ErrorCode(HttpStatus + 코드 + 메시지)를 GlobalExceptionHandler가 변환
+{ "success": false, "error": { "code": "O012", "message": "현재 다른 고객님이 결제를 진행 중인 상품입니다." } }
+```
+
+**도메인 에러 코드 (주문/결제 예시)** — 상태·권한·동시성을 코드로 구분
+
+| 코드 | HTTP | 상황 |
+|---|---|---|
+| `O012` | 409 | 비관적 락 획득 실패 (동시 결제 충돌) |
+| `P002` | 400 | 판매 완료된 상품 |
+| `O004` | 400 | 본인 상품 구매 시도 |
+| `O007` | 400 | 결제 금액 불일치 |
+| `O009` | 400 | 취소 불가 상태 |
+| `O003` | 403 | 주문 권한 없음 |
+
+> 전체 명세는 Swagger UI(`/swagger-ui/index.html`)에서 확인할 수 있습니다.
 
 <br>
 
