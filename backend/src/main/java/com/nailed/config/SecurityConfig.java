@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 브라우저 CORS 사전 확인(Preflight) 요청 — 반드시 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // 모니터링/헬스체크(LB·Prometheus 스크레이핑용) — 운영에선 prometheus는 내부망으로 제한 권장
+                        .requestMatchers("/actuator/**").permitAll()
                         // 비로그인 허용 경로
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
