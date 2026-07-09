@@ -14,20 +14,23 @@
 
 ### 1. 비관적 락으로 중복 주문 방지 — 2중 방어 + 실제 재현 검증
 
-중고거래는 재고가 1개뿐이므로, 동시 구매 요청 시 중복 주문이 발생할 수 있습니다.
-재고 1개 특성상 **충돌 확률이 높아** 낙관적 락의 실패-재시도 비용보다 비관적 락으로 선점 차단하는 것이 적합하다고 판단했습니다.
+재고 1개 상품에 동시 구매가 몰리면 중복 주문이 날 수 있어, 충돌 확률이 높은 특성상 낙관적 락(실패-재시도)보다 **비관적 락으로 선점 차단**하는 쪽을 택했습니다.
 
 ```java
-// ProductRepository — 주문 시 상품 행에 쓰기 락(SELECT ... FOR UPDATE)을 선점
+// ProductRepository — 주문 시 상품 행에 쓰기 락(SELECT ... FOR UPDATE) 선점
 @Lock(LockModeType.PESSIMISTIC_WRITE)
 @Query("SELECT p FROM Product p WHERE p.productId = :productId")
 Optional<Product> findByIdWithLock(@Param("productId") Long productId);
 ```
 
-- **1차 방어** — 락 대기 중 Lock wait timeout(MySQL SQL Error 1205) → `PessimisticLockingFailureException` 감지 → 커스텀 에러코드 `O012`(**409 Conflict**)
-- **2차 방어** — 락 획득 후 상품 상태 재검증 → 이미 `SOLD`면 주문 차단 → 커스텀 에러코드 `P002`(**400 Bad Request**)
-- **검증 ① (2차 방어 · 동시성)** — `@SpringBootTest` + 실제 MySQL에서 **스레드 30개**가 동일 상품을 동시 주문 → **성공 1건 / 차단 29건(전부 `P002`·400) / 상품 `SOLD` / 주문 레코드 1건**을 단정(assert)으로 검증 (`OrderConcurrencyTest`)
-- **검증 ② (1차 방어 · 락 대기)** — 별도 트랜잭션이 상품 행을 `FOR UPDATE`로 점유한 상태에서 주문 요청 → 락 대기 타임아웃(MySQL 1205)으로 **약 2초 만에 `O012`(409) 차단 / 주문 0건 / 상품 `ON_SALE` 유지**를 단정으로 검증 (`OrderLockTimeoutTest`)
+| 방어 | 트리거 | 응답 |
+|---|---|---|
+| **1차** | 락 대기 타임아웃(MySQL 1205) → `PessimisticLockingFailureException` | `O012` **409** |
+| **2차** | 락 획득 후 상품이 이미 `SOLD` | `P002` **400** |
+
+**실측 검증** — 실제 MySQL 통합 테스트, 결과를 assert로 강제:
+- `OrderConcurrencyTest` — 동시 **30건 → 성공 1 / 차단 29(전부 P002) / 상품 SOLD / 주문 1건**
+- `OrderLockTimeoutTest` — 락 점유 중 뒤 요청 **약 2초 만에 O012(409) 차단 / 주문 0 / 상품 ON_SALE 유지**
 
 > **확장 고려** — 단일 인스턴스에선 DB 비관적 락으로 충분하지만, 다중 인스턴스로 스케일아웃하면 애플리케이션 레벨 분산 락(Redis/Redisson)이 필요합니다. 이때 `redisson-spring-boot-starter`는 자동설정이 부팅 시 Redis 커넥션을 강제 생성해 Redis 없이는 기동이 실패하므로, 순수 `redisson` + `@Lazy` 지연 로딩으로 부팅을 안전화해야 한다는 점까지 확인했습니다.
 
