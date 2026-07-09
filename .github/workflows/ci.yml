@@ -1,0 +1,58 @@
+name: CI
+
+# 백엔드 빌드 + 통합 테스트(동시성 포함)를 실제 MySQL 서비스 컨테이너에서 실행한다.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    name: Backend build & test (MySQL 8.4)
+    runs-on: ubuntu-latest
+
+    # 테스트가 실제 MySQL 을 요구하므로(SELECT ... FOR UPDATE 락 동작 검증) 서비스 컨테이너로 띄운다.
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Make mvnw executable
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Build & run tests
+        working-directory: backend
+        run: ./mvnw -B test
+        env:
+          # application-test.properties 의 ${DB_USERNAME}/${DB_PASSWORD} 기본값과 동일.
+          # 테스트는 전용 스키마 nailed_ct 를 createDatabaseIfNotExist 로 자동 생성한다.
+          DB_USERNAME: root
+          DB_PASSWORD: mysql
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports/
+          if-no-files-found: ignore
