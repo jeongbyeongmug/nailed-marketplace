@@ -1,6 +1,6 @@
 # 🛍️ Nailed — 중고거래 웹 플랫폼
 
-[![CI](https://github.com/jeongbyeongmug/nailed-springboot-react/actions/workflows/ci.yml/badge.svg)](https://github.com/jeongbyeongmug/nailed-marketplace/actions/workflows/ci.yml)
+[![CI](https://github.com/jeongbyeongmug/nailed-marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/jeongbyeongmug/nailed-marketplace/actions/workflows/ci.yml)
 
 > **주문 → 결제 → 정산 → CS**로 이어지는 이커머스 트랜잭션 흐름 전체를 설계·구현한 Spring Boot + React 풀스택 프로젝트입니다.
 
