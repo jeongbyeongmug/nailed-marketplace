@@ -23,7 +23,7 @@ nailed-marketplace
 └── docker-compose.yml
 ```
 
-> 저장소 언어 비율은 프론트엔드 빌드 산출물 영향으로 JavaScript가 높게 잡히지만, 핵심 구현은 backend의 Java 코드입니다.
+> 언어 통계는 프론트엔드 빌드 파일 때문에 JavaScript 비중이 높게 잡힙니다. 백엔드 구현은 `backend/` 아래 Java 코드입니다.
 
 ## 핵심 성과
 
@@ -41,7 +41,7 @@ nailed-marketplace
 | `OrderConcurrencyTest` | 동시 30요청 | 성공 1 / 차단 29(O012·P002) / 상품 SOLD / 주문 1건 |
 | `OrderLockTimeoutTest` | 락 선점 상태에서 주문 시도 | 약 2초 대기 후 O012(409), 상품 ON_SALE 유지 |
 
-JVM 내부 락이 아닌 DB 락이므로 백엔드 서버가 N대로 늘어나도 같은 상품 주문은 안전하게 직렬화됩니다. 트레이드오프 : 락 대기 중 커넥션을 점유하며, 락 타임아웃은 MySQL 기본값에 의존합니다.
+락이 JVM이 아니라 DB에서 잡히기 때문에, 서버를 여러 대로 늘려도 같은 상품 주문은 그대로 직렬화됩니다. 트레이드오프 : 락 대기 중 커넥션을 점유하며, 락 타임아웃은 MySQL 기본값에 의존합니다.
 
 ### 2. 금액·배송지 스냅샷
 
