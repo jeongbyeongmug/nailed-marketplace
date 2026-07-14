@@ -1,169 +1,152 @@
-# 🛍️ Nailed — 중고거래 웹 플랫폼
+# 🛍️ Nailed — 중고거래 플랫폼
 
 [![CI](https://github.com/jeongbyeongmug/nailed-marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/jeongbyeongmug/nailed-marketplace/actions/workflows/ci.yml)
 
-> **주문 → 결제 → 정산 → CS**로 이어지는 이커머스 트랜잭션 흐름 전체를 설계·구현한 Spring Boot + React 풀스택 프로젝트입니다.
+주문 → 결제 → 정산 → CS로 이어지는 거래 흐름 전체를 구현한 중고거래 웹 서비스
 
-- **배포**: http://52.78.146.81/ ｜ **기간**: 2026.04 ~ 2026.06 ｜ **팀**: 3인
-- **기술**: Java 21 · Spring Boot 3 · JPA · MySQL 8 · Spring Security(JWT) · React · AWS EC2 · Docker Compose
-- **담당 (정병묵)**: 주문 · 결제 · 정산 · CS + 마이페이지/관리자(주문·문의)
+- **기간** : 2026.04 ~ 2026.06 · **팀** : 3인
+- **배포** : http://52.78.146.81/ — 테스트 계정 id=`wnsdn929` / password=`qwer1234!`
+- **기술** : Java 21 · Spring Boot 3.5 · Spring Security(JWT) · JPA · MySQL 8 · React · Docker Compose(Nginx) · AWS EC2
+- **담당(정병묵)** : 주문 · 결제 · 정산 · CS(1:1 문의) · 마이페이지 · 관리자(주문/문의)
 
-<br>
-
-## ⭐ 핵심 성과
-
-### 1. 비관적 락으로 중복 주문 방지 — 2중 방어 + 실측 검증
-
-재고 1개 상품에 동시 구매가 몰리면 중복 주문이 발생할 수 있습니다. 충돌 확률이 높은 도메인 특성상 낙관적 락(실패-재시도)보다 **비관적 락으로 선점 차단**하는 쪽을 택했습니다.
-
-> **트레이드오프** — 비관적 락은 경합 시 락 대기로 처리량이 떨어지고 데드락 위험이 있습니다. 그래서 **락 타임아웃(→ `O012` 409)으로 무한 대기를 끊고, 락 구간을 ‘상품 조회 ~ 상태 변경’으로 최소화**했습니다. 재고 1개라 '재시도 폭주'가 없는 이 도메인에선 비관적 락의 **예측 가능성**이 더 유리하다고 판단했습니다.
-
-```java
-// ProductRepository — 주문 시 상품 행에 쓰기 락(SELECT ... FOR UPDATE) 선점
-@Lock(LockModeType.PESSIMISTIC_WRITE)
-@Query("SELECT p FROM Product p WHERE p.productId = :productId")
-Optional<Product> findByIdWithLock(@Param("productId") Long productId);
-```
-
-| 방어 | 트리거 | 응답 |
-|---|---|---|
-| **1차** | 락 대기 타임아웃(MySQL 1205) → `PessimisticLockingFailureException` | `O012` **409** |
-| **2차** | 락 획득 후 상품이 이미 `SOLD` | `P002` **400** |
-
-**실측 검증** — 실제 MySQL 통합 테스트로 결과를 assert 강제:
-- `OrderConcurrencyTest` — 동시 **30건 → 성공 1 / 차단 29(전부 P002) / 상품 SOLD / 주문 1건**
-- `OrderLockTimeoutTest` — 락 점유 중 후속 요청 **약 2초 만에 O012(409) 차단 / 주문 0 / 상품 ON_SALE 유지**
-
-> **확장 고려** — 단일 인스턴스에선 DB 비관적 락으로 충분하지만, 다중 인스턴스에선 애플리케이션 레벨 분산 락(Redis/Redisson)이 필요합니다. `redisson-spring-boot-starter`는 부팅 시 Redis 연결을 강제해 Redis 없이는 기동이 실패하므로, 순수 `redisson` + `@Lazy`로 부팅을 안전화하는 지점까지 확인했습니다.
-
-### 2. 금액·배송지 스냅샷 — 정책이 바뀌어도 과거 주문은 불변
-
-수수료·정산금(`commission`, `final_price`, `seller_settlement_amount`)과 배송지를 **주문 시점에 확정 저장**했습니다. 수수료율 정책이 바뀌거나 회원이 주소를 수정해도 과거 주문의 정합성이 유지됩니다.
+## 프로젝트 구조
 
 ```
-(상품가 + 배송비) × 수수료율 2% = 수수료 (10원 단위 반올림)
-예) 490,000 + 4,000 = 494,000 → 수수료 9,880
-    최종 결제 503,880 / 판매자 정산 494,000
+nailed-marketplace
+├── backend    Spring Boot (Java 21) — 도메인 로직·API 전체
+│   └── com.nailed
+│       ├── common   공통 응답 · 예외(ErrorCode, GlobalExceptionHandler) · enum
+│       ├── config   SecurityConfig, JwtTokenProvider
+│       └── web      도메인별 controller → service → repository → entity/dto
+│                    auth · member · product · order · inquiry · admin · review · report · wishlist
+├── frontend   React 19 (Vite) — Nginx가 빌드 결과물 서빙
+└── docker-compose.yml
 ```
 
-정산은 배송완료(`DELIVERED`) 확정 후 판매자에게 지급되는 **에스크로** 방식입니다.
+> 저장소 언어 비율은 프론트엔드 빌드 산출물 영향으로 JavaScript가 높게 잡히지만, 핵심 구현은 backend의 Java 코드입니다.
 
-### 3. 트러블슈팅 — 원인을 끝까지 추적
+## 핵심 성과
 
-- **`@Builder.Default` 누락 → 의도치 않은 UPDATE 쿼리**: Lombok `@Builder`가 필드 초기화 값을 무시해 `null`로 생성 → Hibernate dirty checking 오동작. 어노테이션 명시 + 팀 컨벤션화로 해결
-- **배포 후 이미지 전부 깨짐**: SSH로 EC2 접속해 운영 DB를 직접 확인 → 이미지 URL에 `localhost:8080` 하드코딩이 원인. URL 생성을 환경별 설정 기반으로 수정하고 기존 데이터 일괄 보정
+### 1. 비관적 락으로 1점물 중복 주문 차단
 
-<br>
+중고거래는 모든 상품이 재고 1개입니다. 동시 결제 요청이 들어오면 `SELECT ... FOR UPDATE`(`@Lock(PESSIMISTIC_WRITE)`)로 상품 행을 선점해 직렬화합니다.
 
-## 🖼 화면
+- **락 획득 후 재검증** : 락 경합에서 진 요청은 상품이 이미 SOLD이므로 P002(400)로 차단 — 정상 경합의 기본 경로
+- **락 타임아웃** : 앞 트랜잭션이 오래 걸려 대기가 타임아웃되면 `PessimisticLockingFailureException` → O012(409 Conflict)
 
-| 홈 | 상품 목록 (SOLD) | 주문서 작성 |
+**검증 결과**
+
+| 테스트 | 시나리오 | 결과 |
 | --- | --- | --- |
-| ![home](docs/home.webp) | ![list](docs/list.webp) | ![order](docs/order.png) |
+| `OrderConcurrencyTest` | 동시 30요청 | 성공 1 / 차단 29(O012·P002) / 상품 SOLD / 주문 1건 |
+| `OrderLockTimeoutTest` | 락 선점 상태에서 주문 시도 | 약 2초 대기 후 O012(409), 상품 ON_SALE 유지 |
 
-| 결제 완료 | 주문 상세 (상태) | 마이페이지 (등급·정산) |
-| --- | --- | --- |
-| ![paydone](docs/paydone.png) | ![orderdetail](docs/orderdetail.png) | ![mypage](docs/mypage.png) |
+JVM 내부 락이 아닌 DB 락이므로 백엔드 서버가 N대로 늘어나도 같은 상품 주문은 안전하게 직렬화됩니다. 트레이드오프 : 락 대기 중 커넥션을 점유하며, 락 타임아웃은 MySQL 기본값에 의존합니다.
 
-<br>
+### 2. 금액·배송지 스냅샷
 
-## 🗂 ERD
+수수료·최종 결제액·정산금·수령지 정보를 **주문 시점에 계산해 orders 테이블에 저장**합니다. 이후 수수료 정책이나 회원 정보가 바뀌어도 과거 주문 금액은 변하지 않습니다.
 
-![ERD](./docs/erd.png)
-
-🟧 주황색 테이블(`orders`, `inquiries`)이 제가 설계·구현한 부분입니다. (전체 12개)
-
-**`orders` 테이블 설계 의도**
-- **금액·정산 스냅샷** (`commission` `final_price` `seller_settlement_amount`) — 주문 시점 확정, 정책 변경에도 불변
-- **배송지 스냅샷** (`receiver_*`) — 회원 정보 변경과 무관하게 유지
-- **상태별 타임스탬프 분리** (`paid_at`/`requested_at`/`shipped_at`/`delivered_at`) — 배송 추적·정산 시점 판단 근거
-- **취소 컬럼군 분리** (`cancel_request_*`) — 취소 흐름 독립 추적
-- **구매자·판매자 FK 동시 보유** (`buyer_id`+`seller_id`) — 마이페이지 구매/판매 내역 단일 조인 조회
-
-<br>
-
-## 👤 담당 구현 내용
-
-**주문 상태 흐름**
 ```
-PAID ──▶ REQUESTED ──▶ SHIPPING ──▶ DELIVERED
-  │          │
-  └──────────┴──▶ CANCELLED
+(상품가 + 배송비) × 수수료율 2% = 수수료(10원 단위 반올림)
+예 : 490,000 + 4,000 = 494,000 → 수수료 9,880
+최종 결제액 503,880 / 판매자 정산금 494,000
 ```
 
-- 결제완료(PAID)와 주문접수(REQUESTED)를 분리해 판매자 확인 단계를 명시화
-- 주문 취소는 **구매자 본인 + PAID/REQUESTED 상태에서만** 허용, 취소 시 상품을 `ON_SALE`로 복구
-- `ShippingService` 인터페이스 기반 **어댑터 패턴** — 실제 PG/택배사 연동 시 Mock 구현체만 교체(`MockShippingService`, `MockDeliveryTracker`)
-- 배송완료 시 상품 `SOLD` 확정 + 판매자 등급 자동 재산정(`SellerGradeService`: DELIVERED 건수 기준 SILVER/GOLD/DIAMOND)
-- 마이페이지 구매/판매/정산/문의 내역 — **Port 인터페이스**(`OrderMemberQueryPort`, `SettlementMemberQueryPort`)로 회원 도메인과 결합도 최소화
-- 1:1 문의(등록·조회·답변) + 관리자 주문/문의 관리(`AdminOrderController`, `AdminInquiryController`)
-- `GlobalExceptionHandler` + `ErrorCode`로 BE/FE 에러 응답 규격 통일
+정산금은 DELIVERED 확정 후 지급하는 에스크로 방식을 전제로 계산·저장·조회까지 구현했으며, **실제 지급 트리거는 미구현**(다음 과제)입니다.
 
-<br>
+### 3. 트러블슈팅
 
-## 🔌 API 설계 (담당 — 주문 · CS)
+- **@Builder.Default 누락** : 조회만 했는데 UPDATE 쿼리 발생, 초기값 필드 null 저장. Lombok `@Builder`가 필드 초기값을 무시한 것이 원인 → 초기값 있는 필드에 `@Builder.Default` 적용(5개 엔티티), 재실행으로 검증 후 팀 규칙화
+- **배포 후 이미지 전체 깨짐** : 운영 DB에 `localhost:8080` 절대 URL이 저장돼 있던 것이 원인 → 상대 경로 저장으로 수정, 기존 데이터 일괄 정리
 
-자원 중심 URL · 상태 전이는 `PATCH` · 생성은 `201 Created` + `Location` 등 REST 컨벤션으로 설계했습니다.
+## 데이터 모델
+
+총 12개 테이블. `orders` 테이블 설계 포인트 :
+
+- **스냅샷 컬럼** (`commission`, `final_price`, `seller_settlement_amount`, `receiver_*`)
+- **상태별 타임스탬프** (`paid_at`, `requested_at`, `shipped_at`, `delivered_at`)
+- **취소 추적 분리** (`cancel_request_*` 컬럼 그룹)
+- **이중 외래키** (`buyer_id` + `seller_id`) — 구매/판매 내역을 단일 조인으로 조회
+
+## 주문 상태 머신
+
+```
+PAID → REQUESTED → SHIPPING → DELIVERED
+  ↓________↓
+   CANCELLED
+```
+
+취소는 PAID/REQUESTED 상태에서 구매자 본인만 가능하며, 취소 시 상품은 ON_SALE로 복구됩니다.
+
+## API 명세
+
+REST 컨벤션 : 자원 중심 URL, 상태 전이는 `PATCH`, 생성은 `201 Created` + `Location` 헤더. 전체 명세는 Swagger UI(`/swagger-ui/index.html`)에서 확인할 수 있습니다.
 
 | Method | Endpoint | 설명 |
-|---|---|---|
-| `POST` | `/api/orders` | 주문 생성 → **201 Created** (`Location: /api/orders/{id}`) |
+| --- | --- | --- |
+| `POST` | `/api/orders` | 주문 생성 → 201 + Location |
 | `GET` | `/api/orders/{id}` | 주문 조회 |
 | `PATCH` | `/api/orders/{id}/pay` | 결제 처리 |
-| `PATCH` | `/api/orders/{id}/confirm` | 주문 확인 (판매자) |
-| `PATCH` | `/api/orders/{id}/shipping` | 운송장 등록 (판매자) |
-| `PATCH` | `/api/orders/{id}/delivered` | 배송 완료 |
-| `POST` | `/api/orders/{id}/cancel` | 주문 취소 (구매자) |
+| `PATCH` | `/api/orders/{id}/confirm` | 판매자 주문 확인 |
+| `PATCH` | `/api/orders/{id}/shipping` | 운송장 등록 |
+| `PATCH` | `/api/orders/{id}/delivered` | 배송 완료 처리 |
+| `POST` | `/api/orders/{id}/cancel` | 주문 취소(구매자) |
 | `POST` | `/api/inquiries` | 1:1 문의 등록 |
-| `GET` | `/api/inquiries/my` | 내 문의 목록 (페이징) |
-| `GET` | `/api/inquiries/my/{id}` | 내 문의 상세 |
+| `GET` | `/api/inquiries/my` | 내 문의 목록(페이징) |
 
-**통일 응답 규격** — `ApiResponse<T>` + `GlobalExceptionHandler`로 성공/실패 포맷을 하나로 맞췄습니다.
+**통일 응답 포맷**
 
-```jsonc
+```json
 // 성공
 { "success": true, "data": { "orderId": "...", "status": "PAID", "finalPrice": 503880 } }
 
-// 실패 — ErrorCode(HttpStatus + 코드 + 메시지)를 GlobalExceptionHandler가 변환
-{ "success": false, "error": { "code": "O012", "message": "현재 다른 고객님이 결제를 진행 중인 상품입니다." } }
+// 실패
+{ "success": false, "error": { "code": "O012", "message": "..." } }
 ```
 
-**도메인 에러 코드 (주문/결제 예시)** — 상태·권한·동시성을 코드로 구분
+**도메인 에러 코드** : O012(409 락 획득 실패) · P002(400 판매 완료 상품) · O004(400 본인 상품 구매) · O007(400 결제 금액 불일치) · O009(400 취소 불가 상태) · O003(403 주문 접근 권한 없음)
 
-| 코드 | HTTP | 상황 |
-|---|---|---|
-| `O012` | 409 | 비관적 락 획득 실패 (동시 결제 충돌) |
-| `P002` | 400 | 판매 완료된 상품 |
-| `O004` | 400 | 본인 상품 구매 시도 |
-| `O007` | 400 | 결제 금액 불일치 |
-| `O009` | 400 | 취소 불가 상태 |
-| `O003` | 403 | 주문 권한 없음 |
+## 테스트
 
-> 전체 명세는 Swagger UI(`/swagger-ui/index.html`)에서 확인할 수 있습니다.
-
-<br>
-
-## 🏗 아키텍처 & 실행
-
-```
-Browser(React) ──▶ EC2 [ Docker Compose: Nginx(FE) ─▶ Spring Boot ─▶ MySQL 8 ]
-```
-
-- **인증** — Spring Security + JWT(Access / Refresh Token)
-- **API 문서** — springdoc-openapi(Swagger UI) · `/swagger-ui/index.html`
-- **CI** — push마다 GitHub Actions가 실제 MySQL 컨테이너로 백엔드 통합 테스트(동시성 포함 **총 19개**)를 실행 (`.github/workflows/ci.yml`)
-- **관측성** — Spring Boot Actuator · `/actuator/health`(헬스체크) · `/actuator/metrics`(Micrometer)
-- **확장** — 비관적 락이 DB 레벨이라 백엔드를 N대로 늘려도 동일 상품 주문은 같은 행 락으로 직렬화되어 안전(JVM 로컬 락이면 깨짐). Nginx 로드밸런싱 예시는 [`deploy/`](deploy/) 참고
+동시성 포함 **통합 테스트 19개**를 작성했고, **GitHub Actions CI가 push마다 실제 MySQL 8.4 서비스 컨테이너를 띄워 자동 실행**합니다(`SELECT ... FOR UPDATE` 락 동작까지 실제 DB에서 검증).
 
 ```bash
-cd backend && ./mvnw spring-boot:run                                          # 백엔드
-cd frontend && npm install && npm run dev                                     # 프론트엔드
-cd backend && ./mvnw -Dtest=OrderConcurrencyTest,OrderLockTimeoutTest test    # 동시성 테스트(로컬 MySQL)
-docker compose up -d --build                                                  # 배포
+cd backend && ./mvnw test                                        # 전체
+cd backend && ./mvnw -Dtest=OrderConcurrencyTest,OrderLockTimeoutTest test   # 동시성만
 ```
 
-<br>
+## 아키텍처 · 배포
 
-## 👥 팀원
+```
+브라우저(React) → EC2 [Docker Compose : Nginx(FE) → Spring Boot → MySQL 8]
+```
 
-**정병묵** (주문/결제/정산/CS) · 정병민 (인증/회원/제재) · 윤성준 (상품/리뷰/홈/검색/찜)
+- **인증** : Spring Security + JWT(Access/Refresh). Refresh Token은 HttpOnly 쿠키 + DB 저장
+- **API 문서** : springdoc-openapi / Swagger UI
+- **모니터링** : Spring Boot Actuator (`/actuator/health`, `/actuator/metrics`)
+- **CI** : GitHub Actions — push/PR마다 백엔드 빌드 + 통합 테스트(동시성 포함)를 MySQL 8.4 서비스 컨테이너에서 실행
+- **배포 절차** : 로컬 빌드 → SFTP(FileZilla)로 EC2 업로드 → `docker compose up -d --build` 수동 배포. 배포 자동화(CD)는 다음 과제입니다
+- mysql 컨테이너는 `mysqladmin ping` healthcheck + 볼륨, backend는 `depends_on: service_healthy`, 외부 개방 포트는 80 단일
+
+**로컬 실행**
+
+```bash
+cd backend && ./mvnw spring-boot:run
+cd frontend && npm install && npm run dev
+docker compose up -d --build
+```
+
+## 남은 과제
+
+- 주문번호 count()+1 → 시퀀스/UUID 전환 (동시 주문 시 중복 가능성 제거)
+- HTTPS 적용 (도메인 + Let's Encrypt)
+- 정산금 지급 트리거 구현
+- Refresh Token rotation(재사용 감지)
+- GitHub Actions 기반 배포(CD) 자동화 — 테스트 CI는 적용 완료
+
+## 팀
+
+- **정병묵** : 주문 · 결제 · 정산 · CS · 마이페이지 · 관리자
+- **정병민** : 인증 · 회원 · 제재
+- **윤성준** : 상품 · 리뷰 · 홈 · 검색 · 위시리스트
