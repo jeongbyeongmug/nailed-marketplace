@@ -1,6 +1,7 @@
 package com.nailed.web.order.entity;
 import com.nailed.common.enums.CancelRequestStatus;
 import com.nailed.common.enums.CourierCode;
+import com.nailed.common.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -17,8 +18,9 @@ public class Order {
     @Id
     @Column(name = "order_id", length = 20)
     private String orderId;
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 20)
-    private String orderStatus;
+    private OrderStatus orderStatus;
     private String buyerId;
     private String sellerId;
     private Long productId;
@@ -34,7 +36,9 @@ public class Order {
     private String receiverAddress;
     private String receiverAddressDetail;
     private String deliveryRequest;
-    private String previousStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previous_status", length = 20)
+    private OrderStatus previousStatus;
 
     // 취소 "요청" 진행 상태 (메인 주문 상태인 orderStatus와는 별개로 관리됨)
     // 가능한 값: NONE(취소 요청 없음) / REQUESTED(취소 요청됨) / APPROVED(취소 승인 완료)
@@ -56,32 +60,32 @@ public class Order {
     private LocalDateTime updatedAt;
     // 주문 상태를 변경하면서 변경 직전 상태를 previousStatus에 함께 기록함
     // (마이페이지 등에서 "이전 상태로 되돌아갈 수 있는지" 판단할 때 사용됨)
-    public void changeStatus(String newStatus) {
+    public void changeStatus(OrderStatus newStatus) {
         this.previousStatus = this.orderStatus;
         this.orderStatus = newStatus;
     }
     // 결제 완료 → paidAt 기록, previousStatus = null (최초 상태 전환)
     public void markAsPaid() {
-        changeStatus("PAID");
+        changeStatus(OrderStatus.PAID);
         this.paidAt = LocalDateTime.now();
     }
     // 구매자 배송 요청 → requestedAt 기록, previousStatus = PAID
     public void markAsRequested() {
-        changeStatus("REQUESTED");
+        changeStatus(OrderStatus.REQUESTED);
         this.requestedAt = LocalDateTime.now();
     }
     public void startShipping(CourierCode carrierCode, String trackingNumber) {
-        changeStatus("SHIPPING");
+        changeStatus(OrderStatus.SHIPPING);
         this.carrierCode = carrierCode;
         this.trackingNumber = trackingNumber;
         this.shippedAt = LocalDateTime.now();
     }
     public void markAsDelivered() {
-        changeStatus("DELIVERED");
+        changeStatus(OrderStatus.DELIVERED);
         this.deliveredAt = LocalDateTime.now();
     }
     public void cancel() {
-        changeStatus("CANCELLED");
+        changeStatus(OrderStatus.CANCELLED);
         this.cancelledAt = LocalDateTime.now();
         this.cancelRequestStatus = CancelRequestStatus.APPROVED;
         this.cancelRespondedAt = LocalDateTime.now();

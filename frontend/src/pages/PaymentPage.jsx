@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import kakaoIcon from '../assets/kakaopay.png';
 import naverIcon from '../assets/naverpay.png';
 import tossIcon  from '../assets/tosspay.png';
-import { mockPay } from '../api/orderApi';
-import axios from 'axios';
-import { navigate, getCurrentMemberId, safeParse, METHOD_LABELS } from '../utils/orderHelpers';
+import { mockPay, cancelOrder } from '../api/orderApi';
+import { navigate, safeParse, METHOD_LABELS } from '../utils/orderHelpers';
 import { page, inner, card, cardTitle } from '../styles/orderShared';
 const s = {
   page, inner,
@@ -110,7 +109,8 @@ const sellerBadge   = pendingOrder?.sellerBadge    || 'Bronze';
     setError('');
     try {
       await new Promise((res) => setTimeout(res, 1500));
-      await mockPay(orderId);
+      // 화면에 표시된 금액을 함께 보내 서버 저장액과 대조(불일치 시 O007)
+      await mockPay(orderId, finalPrice);
       sessionStorage.removeItem('orderForm');
       sessionStorage.removeItem('pendingOrder');
       sessionStorage.removeItem('pendingPayment');
@@ -221,9 +221,8 @@ const sellerBadge   = pendingOrder?.sellerBadge    || 'Bronze';
             <button style={{ display: 'block', width: '100%', padding: '14px', background: '#fff', color: '#555', border: '1px solid #ddd', borderRadius: '10px', fontSize: '14px', cursor: 'pointer', marginTop: '8px' }}
                 onClick={async () => {
                   try {
-                    const buyerId = getCurrentMemberId();
-                    if (pendingPayment?.orderId && buyerId) {
-                      await axios.post(`/api/orders/${pendingPayment.orderId}/cancel?buyerId=${buyerId}`);
+                    if (pendingPayment?.orderId) {
+                      await cancelOrder(pendingPayment.orderId); // 구매자 본인 여부는 서버가 토큰으로 검증
                     }
                   } catch {}
                   sessionStorage.removeItem('pendingPayment');

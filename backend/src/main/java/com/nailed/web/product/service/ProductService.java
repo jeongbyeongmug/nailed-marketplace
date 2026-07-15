@@ -1,6 +1,7 @@
 package com.nailed.web.product.service;
 
 import com.nailed.common.enums.GroupType;
+import com.nailed.common.enums.OrderStatus;
 import com.nailed.common.enums.ProductCondition;
 import com.nailed.common.enums.ProductStatus;
 import com.nailed.common.enums.SizeCode;
@@ -347,7 +348,7 @@ public class ProductService {
 
         // 진행중 거래가 있으면 삭제 불가 (REQUESTED / PAID / SHIPPING 상태)
         if (orderRepository.existsByProductIdAndOrderStatusIn(
-                productId, List.of("REQUESTED", "PAID", "SHIPPING"))) {
+                productId, List.of(OrderStatus.REQUESTED, OrderStatus.PAID, OrderStatus.SHIPPING))) {
             throw new CustomException(ErrorCode.PRODUCT_HAS_ACTIVE_ORDER);
         }
 

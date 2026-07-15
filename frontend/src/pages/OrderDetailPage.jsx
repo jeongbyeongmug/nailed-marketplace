@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getOrder, registerTracking, confirmDelivery, confirmOrder, cancelOrder } from '../api/orderApi';
 import { navigate, getCurrentMemberId, safeParse, METHOD_LABELS } from '../utils/orderHelpers';
 import { page, inner, card, cardTitle } from '../styles/orderShared';
 import { API_BASE_URL } from '../api/config';
@@ -81,10 +82,11 @@ export default function OrderDetail({ orderId }) {
 useEffect(() => {
   if (!orderId) { setError('주문 번호가 없습니다.'); setLoading(false); return; }
   
-  axios.get(`/api/orders/${orderId}`)
-    .then((orderRes) => {
-      setOrder(orderRes.data);
-      const pid = completed?.productId || orderRes.data?.productId;
+  // 주문 조회는 JWT 인증 필수 + 주문 당사자만 가능 → 인증 헤더를 붙여주는 orderApi 사용
+  getOrder(orderId)
+    .then((orderData) => {
+      setOrder(orderData);
+      const pid = completed?.productId || orderData?.productId;
       if (pid) {
         return axios.get(`/api/products/${pid}`).then((res) =>  setProduct(res.data.data ?? res.data));
       }
@@ -98,7 +100,7 @@ useEffect(() => {
     if (!carrierCode || !trackingNumber) return;
     setSubmitting(true);
     try {
-      await axios.patch(`/api/orders/${orderId}/shipping`, {
+      await registerTracking(orderId, {
         carrierCode,
         trackingNumber,
       });
@@ -123,7 +125,7 @@ useEffect(() => {
     if (confirming) return;
     setConfirming(true);
     try {
-      await axios.patch(`/api/orders/${orderId}/delivered`);
+      await confirmDelivery(orderId);
       alert('배송완료 처리되었습니다. 판매자에게 정산됩니다.');
       window.location.reload();
     } catch (e) {
@@ -136,7 +138,7 @@ useEffect(() => {
   const handleCancel = async () => {
     if (!window.confirm('정말 취소하시겠습니까?')) return;
     try {
-      await axios.post(`/api/orders/${orderId}/cancel?buyerId=${currentMemberId}`);
+      await cancelOrder(orderId); // 구매자 본인 여부는 서버가 토큰으로 검증
       alert('주문이 취소되었습니다.');
       window.location.reload();
     } catch (e) {
@@ -147,7 +149,7 @@ useEffect(() => {
   // [판매자 전용] PAID(결제완료) 상태에서만 호출 가능 — 주문 확인 처리 → 주문 상태가 REQUESTED로 전환됨
   const handleConfirmOrder = async () => {
     try {
-      await axios.patch(`/api/orders/${orderId}/confirm?sellerId=${currentMemberId}`);
+      await confirmOrder(orderId); // 판매자 본인 여부는 서버가 토큰으로 검증
       alert('주문이 확인되었습니다.');
       window.location.reload();
     } catch (e) {

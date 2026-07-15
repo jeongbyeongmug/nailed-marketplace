@@ -123,7 +123,7 @@ class OrderConcurrencyTest {
                 ready.countDown();
                 try {
                     start.await();                                     // 전 스레드가 동시에 진입
-                    orderService.createOrder(buyerId, sellerId, request);
+                    orderService.createOrder(buyerId, request);
                     successCount.incrementAndGet();
                 } catch (CustomException e) {
                     countBlocked(blockedByCode, e.getErrorCode().getCode());

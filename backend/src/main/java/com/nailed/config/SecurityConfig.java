@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/products/*/view").permitAll()
                         .requestMatchers("/uploads/**", "/images/**").permitAll()
-                        .requestMatchers("/api/orders/**").permitAll()
+                        // 주문 API는 JWT 인증 필수 — 요청자 식별은 토큰에서 (anyRequest().authenticated()에 포함)
                         // 어드민 전용 (ROLE_ADMIN 필요)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 나머지 모두 로그인 필요

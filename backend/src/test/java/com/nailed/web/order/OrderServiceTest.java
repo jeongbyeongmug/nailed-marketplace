@@ -85,7 +85,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("createOrder 성공 → 수수료 2%·10원 반올림 정산 계산 정확 + 상품 SOLD + 주문 PAID")
     void createOrder_success_computesSettlement_andMarksSold() {
-        OrderResponseDto res = orderService.createOrder("buyer_1", sellerId, request());
+        OrderResponseDto res = orderService.createOrder("buyer_1", request());
 
         // (490,000 + 4,000) × 2% = 9,880  →  최종 503,880 / 정산 494,000
         assertThat(res.getProductPrice()).isEqualTo(490_000);
@@ -105,7 +105,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("createOrder — 본인 상품 구매(buyerId == sellerId)는 O004로 차단")
     void createOrder_selfOrder_isRejected() {
-        CustomException ex = expectCustom(() -> orderService.createOrder(sellerId, sellerId, request()));
+        CustomException ex = expectCustom(() -> orderService.createOrder(sellerId, request()));
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.SELF_ORDER_NOT_ALLOWED); // O004
     }
 
@@ -114,7 +114,7 @@ class OrderServiceTest {
     void createOrder_alreadySold_isRejected() {
         productRepository.updateProductStatus(productId, ProductStatus.SOLD);
 
-        CustomException ex = expectCustom(() -> orderService.createOrder("buyer_1", sellerId, request()));
+        CustomException ex = expectCustom(() -> orderService.createOrder("buyer_1", request()));
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_ALREADY_SOLD); // P002
         assertThat(orderRepository.count()).isZero();
     }
@@ -122,7 +122,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("confirmOrder — 판매자가 PAID 주문 접수 시 REQUESTED로 전이")
     void confirmOrder_bySeller_movesToRequested() {
-        String orderId = orderService.createOrder("buyer_1", sellerId, request()).getOrderId();
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
 
         OrderResponseDto res = orderService.confirmOrder(orderId, sellerId);
 
@@ -133,7 +133,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("confirmOrder — 판매자가 아니면 O003으로 차단")
     void confirmOrder_byNonSeller_isRejected() {
-        String orderId = orderService.createOrder("buyer_1", sellerId, request()).getOrderId();
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
 
         CustomException ex = expectCustom(() -> orderService.confirmOrder(orderId, "someone_else"));
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_UNAUTHORIZED); // O003
@@ -142,7 +142,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("cancelOrder — 구매자가 PAID 주문 취소 시 CANCELLED + 상품 ON_SALE 복구")
     void cancelOrder_byBuyer_restoresProduct() {
-        String orderId = orderService.createOrder("buyer_1", sellerId, request()).getOrderId();
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
         assertThat(productRepository.findById(productId).orElseThrow().getProductStatus())
                 .isEqualTo(ProductStatus.SOLD);
 
@@ -156,26 +156,67 @@ class OrderServiceTest {
     @Test
     @DisplayName("cancelOrder — 구매자 본인이 아니면 O003으로 차단")
     void cancelOrder_byNonBuyer_isRejected() {
-        String orderId = orderService.createOrder("buyer_1", sellerId, request()).getOrderId();
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
 
         CustomException ex = expectCustom(() -> orderService.cancelOrder(orderId, "buyer_2"));
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_UNAUTHORIZED); // O003
     }
 
     @Test
-    @DisplayName("cancelOrder — PAID가 아닌 상태(REQUESTED)에서는 O002로 차단")
-    void cancelOrder_notPaidStatus_isRejected() {
-        String orderId = orderService.createOrder("buyer_1", sellerId, request()).getOrderId();
+    @DisplayName("cancelOrder — REQUESTED(주문접수) 상태에서도 구매자 취소 가능")
+    void cancelOrder_requestedStatus_isAllowed() {
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
         orderService.confirmOrder(orderId, sellerId); // PAID → REQUESTED
+
+        OrderResponseDto res = orderService.cancelOrder(orderId, "buyer_1");
+
+        assertThat(res.getOrderStatus()).isEqualTo("CANCELLED");
+        assertThat(productRepository.findById(productId).orElseThrow().getProductStatus())
+                .isEqualTo(ProductStatus.ON_SALE);
+    }
+
+    @Test
+    @DisplayName("cancelOrder — 이미 취소된 주문(CANCELLED)은 O002로 차단")
+    void cancelOrder_alreadyCancelled_isRejected() {
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
+        orderService.cancelOrder(orderId, "buyer_1"); // PAID → CANCELLED
 
         CustomException ex = expectCustom(() -> orderService.cancelOrder(orderId, "buyer_1"));
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_INVALID_STATUS); // O002
     }
 
     @Test
+    @DisplayName("getOrder — 주문 당사자(구매자/판매자)가 아니면 O003으로 차단")
+    void getOrder_byOutsider_isRejected() {
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
+
+        CustomException ex = expectCustom(() -> orderService.getOrder(orderId, "outsider"));
+        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_UNAUTHORIZED); // O003
+    }
+
+    @Test
+    @DisplayName("mockPay — 결제 금액 불일치 시 O007로 차단")
+    void mockPay_amountMismatch_isRejected() {
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
+
+        CustomException ex = expectCustom(() -> orderService.mockPay(orderId, "buyer_1", 999));
+        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_AMOUNT_MISMATCH); // O007
+    }
+
+    @Test
+    @DisplayName("mockPay — 접수 이후 단계로 진행된 주문은 O006(결제 완료)으로 차단")
+    void mockPay_afterProgressed_isRejected() {
+        String orderId = orderService.createOrder("buyer_1", request()).getOrderId();
+        orderService.confirmOrder(orderId, sellerId); // PAID → REQUESTED
+
+        CustomException ex = expectCustom(() -> orderService.mockPay(orderId, "buyer_1", 503_880));
+        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_ALREADY_COMPLETED); // O006
+    }
+
+    @Test
     @DisplayName("getOrder — 존재하지 않는 주문은 EntityNotFoundException")
     void getOrder_notFound() {
-        assertThatThrownBy(() -> orderService.getOrder("NO_SUCH_ORDER"))
+        assertThatThrownBy(() -> orderService.getOrder("NO_SUCH_ORDER", "buyer_1"))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 

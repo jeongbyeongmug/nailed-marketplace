@@ -26,13 +26,17 @@ public class MockShippingService implements ShippingService {
     private final ProductRepository productRepository;
     private final SellerGradeService sellerGradeService;
     @Override
-    public OrderResponseDto registerTracking(String orderId, String carrierCode, String trackingNumber) {
+    public OrderResponseDto registerTracking(String orderId, String sellerId, String carrierCode, String trackingNumber) {
         CourierCode courier = EnumUtil.parse(CourierCode.class, carrierCode, ErrorCode.INVALID_COURIER_CODE);
         if (!TRACKING_PATTERN.matcher(trackingNumber).matches()) {
             throw new CustomException(ErrorCode.INVALID_TRACKING_NUMBER);
         }
         Order order = findOrder(orderId);
-        if (!OrderStatus.REQUESTED.name().equals(order.getOrderStatus())) {
+        // 판매자 본인만 운송장 등록 가능 — O003
+        if (!sellerId.equals(order.getSellerId())) {
+            throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
+        }
+        if (order.getOrderStatus() != OrderStatus.REQUESTED) {
             throw new CustomException(ErrorCode.DELIVERY_INVALID_STATUS);
         }
         order.startShipping(courier, trackingNumber);
@@ -44,9 +48,13 @@ public class MockShippingService implements ShippingService {
         return OrderResponseDto.from(savedOrder, product.getShippingFee(), product.getPrice());
     }
     @Override
-    public OrderResponseDto confirmDelivery(String orderId) {
+    public OrderResponseDto confirmDelivery(String orderId, String buyerId) {
         Order order = findOrder(orderId);
-        if (!OrderStatus.SHIPPING.name().equals(order.getOrderStatus())) {
+        // 구매자 본인만 수취 확인 가능 — O003
+        if (!buyerId.equals(order.getBuyerId())) {
+            throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
+        }
+        if (order.getOrderStatus() != OrderStatus.SHIPPING) {
             throw new CustomException(ErrorCode.DELIVERY_INVALID_STATUS);
         }
         order.markAsDelivered();

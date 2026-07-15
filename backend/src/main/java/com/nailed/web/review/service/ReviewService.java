@@ -1,5 +1,6 @@
 package com.nailed.web.review.service;
 
+import com.nailed.common.enums.OrderStatus;
 import com.nailed.common.exception.CustomException;
 import com.nailed.common.exception.ErrorCode;
 import com.nailed.common.response.PageResponse;
@@ -47,7 +48,7 @@ public class ReviewService {
         Order order = orderRepository.findById(req.orderId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (!"DELIVERED".equals(order.getOrderStatus())) {
+        if (order.getOrderStatus() != OrderStatus.DELIVERED) {
             throw new CustomException(ErrorCode.REVIEW_NOT_ALLOWED);
         }
         if (!order.getBuyerId().equals(buyerId)) {

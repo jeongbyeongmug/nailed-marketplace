@@ -20,7 +20,7 @@ public class SellerGradeService {
     public void refreshSellerGrade(String sellerId) {
         long completedCount = orderRepository.countBySellerIdAndOrderStatus(
                 sellerId,
-                OrderStatus.DELIVERED.name()
+                OrderStatus.DELIVERED
         );
 
         SellerGrade sellerGrade = calculateGrade(completedCount);

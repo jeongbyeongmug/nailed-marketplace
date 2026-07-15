@@ -1,4 +1,5 @@
 package com.nailed.web.order.repository;
+import com.nailed.common.enums.OrderStatus;
 import com.nailed.web.order.entity.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,9 +12,9 @@ import java.time.LocalDateTime;
 
 public interface OrderRepository extends JpaRepository<Order, String> {
     // 판매자의 거래완료(DELIVERED) 건수 → 판매자 등급 산정용
-    long countBySellerIdAndOrderStatus(String sellerId, String orderStatus);
+    long countBySellerIdAndOrderStatus(String sellerId, OrderStatus orderStatus);
     // 특정 상품의 진행중 거래 존재 여부 → 상품 삭제 불가 체크용
-    boolean existsByProductIdAndOrderStatusIn(Long productId, List<String> statuses);
+    boolean existsByProductIdAndOrderStatusIn(Long productId, List<OrderStatus> statuses);
 
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE orders SET order_status = 'CANCELLED', previous_status = order_status, " +
@@ -56,7 +57,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             """)
     Page<Order> searchAdminOrders(
             @Param("keyword") String keyword,
-            @Param("orderStatus") String orderStatus,
+            @Param("orderStatus") OrderStatus orderStatus,
             @Param("dateFrom") LocalDateTime dateFrom,
             @Param("dateTo") LocalDateTime dateTo,
             Pageable pageable);

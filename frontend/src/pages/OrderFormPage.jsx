@@ -1,6 +1,5 @@
 import { useState, useEffect} from 'react';
-import { createOrder } from '../api/orderApi';
-import axios from 'axios';
+import { createOrder, cancelOrder } from '../api/orderApi';
 import { navigate, getCurrentMemberId, safeParse, COMMISSION_RATE } from '../utils/orderHelpers';
 import { page, inner, card, cardTitle } from '../styles/orderShared';
 
@@ -77,8 +76,7 @@ const finalPrice       = productAmount + shippingFee + commission;
     if (existingPayment) {
       try {
         const existing = JSON.parse(existingPayment);
-        const buyerId = getCurrentMemberId() || pendingOrder?.buyerId;
-        await axios.post(`/api/orders/${existing.orderId}/cancel?buyerId=${buyerId}`);
+        await cancelOrder(existing.orderId); // 구매자 본인 여부는 서버가 토큰으로 검증
       } catch (err) {
         console.error('이전 주문 자동 취소 실패:', err);
       }
@@ -95,8 +93,8 @@ const finalPrice       = productAmount + shippingFee + commission;
         receiverAddressDetail: form.addressDetail,
         deliveryRequest:       form.deliveryRequest,
       };
-      const buyerId = getCurrentMemberId() || pendingOrder.buyerId;
-      const response = await createOrder(buyerId, pendingOrder.sellerId, orderData);
+      // 구매자·판매자는 서버가 JWT와 상품 소유자에서 식별하므로 보내지 않는다
+      const response = await createOrder(orderData);
       
       if (response?.orderId) {
         sessionStorage.setItem('pendingPayment', JSON.stringify({

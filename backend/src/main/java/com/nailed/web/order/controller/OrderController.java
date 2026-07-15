@@ -1,4 +1,7 @@
 package com.nailed.web.order.controller;
+import com.nailed.common.response.ApiResponse;
+import com.nailed.common.util.SecurityUtil;
+import com.nailed.web.order.dto.OrderPayRequestDto;
 import com.nailed.web.order.dto.OrderRequestDto;
 import com.nailed.web.order.dto.OrderResponseDto;
 import com.nailed.web.order.dto.ShippingRequestDto;
@@ -9,58 +12,75 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
+
+/**
+ * 주문 API — 모든 엔드포인트는 JWT 인증 필수.
+ * 요청자 식별은 클라이언트 파라미터가 아니라 SecurityContext(토큰의 memberId)에서 가져온다.
+ */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
     private final ShippingService shippingService;
+
     @PostMapping("")
-    public ResponseEntity<OrderResponseDto> createOrder(
-            @RequestParam("buyerId") String buyerId,
-            @RequestParam("sellerId") String sellerId,
+    public ResponseEntity<ApiResponse<OrderResponseDto>> createOrder(
             @Valid @RequestBody OrderRequestDto requestDto
     ) {
-        OrderResponseDto response = orderService.createOrder(buyerId, sellerId, requestDto);
-        return ResponseEntity.created(URI.create("/api/orders/" + response.getOrderId())).body(response);
+        String buyerId = SecurityUtil.getCurrentMemberId();
+        OrderResponseDto response = orderService.createOrder(buyerId, requestDto);
+        return ResponseEntity.created(URI.create("/api/orders/" + response.getOrderId()))
+                .body(ApiResponse.success(response));
     }
+
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponseDto> getOrder(@PathVariable("orderId") String orderId) {
-        return ResponseEntity.ok(orderService.getOrder(orderId));
+    public ResponseEntity<ApiResponse<OrderResponseDto>> getOrder(@PathVariable("orderId") String orderId) {
+        String viewerId = SecurityUtil.getCurrentMemberId();
+        return ResponseEntity.ok(ApiResponse.success(orderService.getOrder(orderId, viewerId)));
     }
+
     // 운송장 등록 (판매자, mock)
     @PatchMapping("/{orderId}/shipping")
-    public ResponseEntity<OrderResponseDto> registerTracking(
+    public ResponseEntity<ApiResponse<OrderResponseDto>> registerTracking(
             @PathVariable("orderId") String orderId,
             @Valid @RequestBody ShippingRequestDto requestDto
     ) {
-        return ResponseEntity.ok(
-                shippingService.registerTracking(orderId, requestDto.getCarrierCode(), requestDto.getTrackingNumber())
-        );
+        String sellerId = SecurityUtil.getCurrentMemberId();
+        return ResponseEntity.ok(ApiResponse.success(
+                shippingService.registerTracking(orderId, sellerId, requestDto.getCarrierCode(), requestDto.getTrackingNumber())
+        ));
     }
-    // 배송 완료 처리 (mock)
+
+    // 배송 완료 처리 (구매자 수취 확인, mock)
     @PatchMapping("/{orderId}/delivered")
-    public ResponseEntity<OrderResponseDto> confirmDelivery(@PathVariable("orderId") String orderId) {
-        return ResponseEntity.ok(shippingService.confirmDelivery(orderId));
+    public ResponseEntity<ApiResponse<OrderResponseDto>> confirmDelivery(@PathVariable("orderId") String orderId) {
+        String buyerId = SecurityUtil.getCurrentMemberId();
+        return ResponseEntity.ok(ApiResponse.success(shippingService.confirmDelivery(orderId, buyerId)));
     }
-    // 결제 처리 (mock)
+
+    // 결제 처리 (구매자, mock) — 바디의 expectedAmount로 결제 금액 일치 검증(O007)
     @PatchMapping("/{orderId}/pay")
-    public ResponseEntity<OrderResponseDto> mockPay(@PathVariable("orderId") String orderId) {
-        return ResponseEntity.ok(orderService.mockPay(orderId));
+    public ResponseEntity<ApiResponse<OrderResponseDto>> mockPay(
+            @PathVariable("orderId") String orderId,
+            @RequestBody(required = false) OrderPayRequestDto requestDto
+    ) {
+        String buyerId = SecurityUtil.getCurrentMemberId();
+        Integer expectedAmount = requestDto != null ? requestDto.getExpectedAmount() : null;
+        return ResponseEntity.ok(ApiResponse.success(orderService.mockPay(orderId, buyerId, expectedAmount)));
     }
+
     // 주문 확인 (판매자)
     @PatchMapping("/{orderId}/confirm")
-    public ResponseEntity<OrderResponseDto> confirmOrder(
-            @PathVariable("orderId") String orderId,
-            @RequestParam("sellerId") String sellerId) {
-        return ResponseEntity.ok(orderService.confirmOrder(orderId, sellerId));
+    public ResponseEntity<ApiResponse<OrderResponseDto>> confirmOrder(@PathVariable("orderId") String orderId) {
+        String sellerId = SecurityUtil.getCurrentMemberId();
+        return ResponseEntity.ok(ApiResponse.success(orderService.confirmOrder(orderId, sellerId)));
     }
+
     // 주문 취소 (구매자)
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderResponseDto> cancelOrder(
-            @PathVariable("orderId") String orderId,
-            @RequestParam("buyerId") String buyerId
-    ) {
-        return ResponseEntity.ok(orderService.cancelOrder(orderId, buyerId));
+    public ResponseEntity<ApiResponse<OrderResponseDto>> cancelOrder(@PathVariable("orderId") String orderId) {
+        String buyerId = SecurityUtil.getCurrentMemberId();
+        return ResponseEntity.ok(ApiResponse.success(orderService.cancelOrder(orderId, buyerId)));
     }
 }

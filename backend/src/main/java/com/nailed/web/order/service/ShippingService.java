@@ -4,7 +4,9 @@ import com.nailed.web.order.dto.OrderResponseDto;
 
 public interface ShippingService {
 
-    OrderResponseDto registerTracking(String orderId, String carrierCode, String trackingNumber);
+    // 운송장 등록 — 주문의 판매자 본인만 가능
+    OrderResponseDto registerTracking(String orderId, String sellerId, String carrierCode, String trackingNumber);
 
-    OrderResponseDto confirmDelivery(String orderId);
+    // 배송 완료(수취 확인) — 주문의 구매자 본인만 가능
+    OrderResponseDto confirmDelivery(String orderId, String buyerId);
 }

@@ -131,7 +131,7 @@ class OrderLockTimeoutTest {
         CustomException thrown = null;
         long startedAt = System.currentTimeMillis();
         try {
-            orderService.createOrder("buyer_waiter", sellerId, buildOrderRequest(productId));
+            orderService.createOrder("buyer_waiter", buildOrderRequest(productId));
         } catch (CustomException e) {
             thrown = e;
         }

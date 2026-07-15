@@ -84,7 +84,7 @@ public class AdminOrderService {
                 order.getProductId(),
                 product != null ? product.getTitle() : null,
                 thumbnailMap.get(order.getProductId()),
-                order.getOrderStatus(),
+                order.getOrderStatus() != null ? order.getOrderStatus().name() : null,
                 toProductInfo(product),
                 order.getCommission(),
                 order.getFinalPrice(),
@@ -92,7 +92,7 @@ public class AdminOrderService {
                 order.getPaidAt(),
                 completedAt(order),
                 order.getUpdatedAt(),
-                order.getPreviousStatus(),
+                order.getPreviousStatus() != null ? order.getPreviousStatus().name() : null,
                 order.getCancelRequestReason(),
                 order.getRequestedAt(),
                 order.getShippedAt(),
@@ -172,19 +172,19 @@ public class AdminOrderService {
     }
 
     private LocalDateTime completedAt(Order order) {
-        if (OrderStatus.DELIVERED.name().equals(order.getOrderStatus())) {
+        if (order.getOrderStatus() == OrderStatus.DELIVERED) {
             return order.getDeliveredAt();
         }
-        if (OrderStatus.CANCELLED.name().equals(order.getOrderStatus())) {
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
             return order.getCancelledAt();
         }
         return null;
     }
 
-    private void validateCancelableStatus(String orderStatus) {
-        if (OrderStatus.PAID.name().equals(orderStatus)
-                || OrderStatus.REQUESTED.name().equals(orderStatus)
-                || OrderStatus.SHIPPING.name().equals(orderStatus)) {
+    private void validateCancelableStatus(OrderStatus orderStatus) {
+        if (orderStatus == OrderStatus.PAID
+                || orderStatus == OrderStatus.REQUESTED
+                || orderStatus == OrderStatus.SHIPPING) {
             return;
         }
         throw new CustomException(ErrorCode.CANCEL_NOT_ALLOWED);
@@ -198,13 +198,13 @@ public class AdminOrderService {
         return toSummary(order, memberMap, productMap, thumbnailMap);
     }
 
-    private String parseOrderStatus(String orderStatus) {
+    private OrderStatus parseOrderStatus(String orderStatus) {
         String value = blankToNull(orderStatus);
         if (value == null) {
             return null;
         }
         try {
-            return OrderStatus.valueOf(value.toUpperCase()).name();
+            return OrderStatus.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }

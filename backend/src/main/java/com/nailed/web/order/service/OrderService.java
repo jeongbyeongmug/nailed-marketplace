@@ -28,19 +28,22 @@ public class OrderService {
     private final ProductRepository productRepository;
 
     @Transactional
-    public OrderResponseDto createOrder(String buyerId, String sellerId, OrderRequestDto req) {
-        if (buyerId.equals(sellerId)) {
-            throw new CustomException(ErrorCode.SELF_ORDER_NOT_ALLOWED);
-        }
+    public OrderResponseDto createOrder(String buyerId, OrderRequestDto req) {
         Product product;
         try {
             // 일반 findById 대신 레포지토리에 추가해 둔 findByIdWithLock을 사용해 DB 락을 선점합니다.
             product = productRepository.findByIdWithLock(req.getProductId())
                     .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다. productId=" + req.getProductId()));
         } catch (PessimisticLockingFailureException e) {
-            // 동시에 여러 요청이 들어와 먼저 잡힌 락 때문에 실패(타임아웃 등)한 경우 
+            // 동시에 여러 요청이 들어와 먼저 잡힌 락 때문에 실패(타임아웃 등)한 경우
             // 아까 등록해 둔 O012(409 Conflict) 에러 코드를 실어서 커스텀 예외를 던집니다.
             throw new CustomException(ErrorCode.LOCK_ACQUISITION_FAILED);
+        }
+
+        // 판매자는 클라이언트 입력이 아니라 상품 소유자에서 파생 — 위조된 sellerId 주입 차단
+        String sellerId = product.getSeller().getMemberId();
+        if (buyerId.equals(sellerId)) {
+            throw new CustomException(ErrorCode.SELF_ORDER_NOT_ALLOWED);
         }
 
         // 락을 획득하고 들어왔으나, 먼저 수행된 트랜잭션이 이미 결제를 마쳐 SOLD 상태로 변했다면 안전하게 차단합니다.
@@ -80,18 +83,37 @@ public class OrderService {
         return OrderResponseDto.from(orderRepository.save(order), shippingFee, productPrice);
     }
 
-    public OrderResponseDto getOrder(String orderId) {
+    public OrderResponseDto getOrder(String orderId, String viewerId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 주문입니다. orderId=" + orderId));
+        // 주문 당사자(구매자/판매자)만 조회 가능 — O003
+        if (!viewerId.equals(order.getBuyerId()) && !viewerId.equals(order.getSellerId())) {
+            throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
+        }
         Product product = productRepository.findById(order.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다. productId=" + order.getProductId()));
         return OrderResponseDto.from(order, product.getShippingFee(), product.getPrice());
     }
 
     @Transactional
-    public OrderResponseDto mockPay(String orderId) {
+    public OrderResponseDto mockPay(String orderId, String buyerId, Integer expectedAmount) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 주문입니다. orderId=" + orderId));
+        // 구매자 본인만 결제 가능 — O003
+        if (!buyerId.equals(order.getBuyerId())) {
+            throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
+        }
+        // 상태 검증: 이미 접수 이후 단계로 진행된 주문은 재결제 불가(O006), 취소된 주문은 결제 불가(O002)
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new CustomException(ErrorCode.ORDER_INVALID_STATUS);
+        }
+        if (order.getOrderStatus() != OrderStatus.PAID) {
+            throw new CustomException(ErrorCode.PAYMENT_ALREADY_COMPLETED);
+        }
+        // 금액 검증: 클라이언트가 표시한 결제 금액과 서버에 저장된 최종 결제액이 다르면 차단 — O007
+        if (expectedAmount != null && !expectedAmount.equals(order.getFinalPrice())) {
+            throw new CustomException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
         Product product = productRepository.findById(order.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다. productId=" + order.getProductId()));
         order.markAsPaid();
@@ -105,7 +127,7 @@ public class OrderService {
         if (!sellerId.equals(order.getSellerId())) {
             throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
         }
-        if (!OrderStatus.PAID.name().equals(order.getOrderStatus())) {
+        if (order.getOrderStatus() != OrderStatus.PAID) {
             throw new CustomException(ErrorCode.ORDER_INVALID_STATUS);
         }
         order.markAsRequested();
@@ -121,7 +143,9 @@ public class OrderService {
         if (!buyerId.equals(order.getBuyerId())) {
             throw new CustomException(ErrorCode.ORDER_UNAUTHORIZED);
         }
-        if (!OrderStatus.PAID.name().equals(order.getOrderStatus())) {
+        // 취소는 PAID(결제완료)·REQUESTED(주문접수) 상태에서만 가능 — 배송 시작 이후에는 불가
+        if (order.getOrderStatus() != OrderStatus.PAID
+                && order.getOrderStatus() != OrderStatus.REQUESTED) {
             throw new CustomException(ErrorCode.ORDER_INVALID_STATUS);
         }
         orderRepository.cancelOrder(orderId);
